@@ -1,0 +1,35 @@
+import pandas as pd
+
+# Supongamos que ya tienes tu DataFrame df
+# Por ejemplo:
+data = {'tipo': ['a', 'b', 'c', 'a', 'b', 'c', 'd', 'd', 'a'],
+        'monto': [100, 200, 150, 120, 180, 130, 250, 300, 1000]}
+
+df = pd.DataFrame(data)
+
+# Define la función para calcular cuartiles excluyendo outliers
+def cuartiles_sin_outliers(series):
+    q1 = series.quantile(0.25)
+    q3 = series.quantile(0.75)
+    iqr = q3 - q1
+    lower_bound = q1 - 1.5 * iqr
+    upper_bound = q3 + 1.5 * iqr
+
+    # Filtra los valores dentro del rango intercuartílico
+    filtered_values = series[(series >= lower_bound) & (series <= upper_bound)]
+
+    return pd.Series([filtered_values.min(), filtered_values.quantile(0.25), filtered_values.median(),
+                      filtered_values.quantile(0.75), filtered_values.max()],
+                     index=['min', 'q1', 'median', 'q3', 'max'])
+
+# Calcula los cuartiles excluyendo outliers
+result_sin_outliers = df.groupby('tipo')['monto'].apply(cuartiles_sin_outliers).unstack()
+
+# Calcula los cuartiles incluyendo outliers
+result_con_outliers = df.groupby('tipo')['monto'].quantile([0, 0.25, 0.5, 0.75, 1]).unstack()
+
+print("Cuartiles excluyendo outliers:")
+print(result_sin_outliers)
+
+print("\nCuartiles incluyendo outliers:")
+print(result_con_outliers)
